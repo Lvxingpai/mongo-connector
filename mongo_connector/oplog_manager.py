@@ -418,12 +418,6 @@ class OplogThread(threading.Thread):
             return None
         long_ts = util.bson_ts_to_long(timestamp)
 
-        def query_func(query, coll, fields):
-            if fields:
-                return coll.find(query, {key:1 for key in fields}).sort([('_id', pymongo.ASCENDING)])
-            else:
-                return coll.find(query).sort([('_id', pymongo.ASCENDING)])
-
         def docs_to_dump(namespace):
             database, coll = namespace.split('.', 1)
             last_id = None
@@ -434,17 +428,16 @@ class OplogThread(threading.Thread):
                 target_coll = self.primary_client[database][coll]
                 if not last_id:
                     cursor = util.retry_until_ok(
-                        query_func,
-                        query={},
-                        coll=target_coll,
-                        fields=self._fields
+                        target_coll.find,
+                        projection=self._fields,
+                        sort=[("_id", pymongo.ASCENDING)]
                     )
                 else:
                     cursor = util.retry_until_ok(
                         target_coll.find,
-                        query={"_id": {"$gt": last_id}},
-                        coll=target_coll,
-                        fields=self._fields
+                        {"_id": {"$gt": last_id}},
+                        projection=self._fields,
+                        sort=[("_id", pymongo.ASCENDING)]
                     )
                 try:
                     for doc in cursor:

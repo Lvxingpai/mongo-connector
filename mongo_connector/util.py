@@ -70,7 +70,7 @@ def retry_until_ok(func, *args, **kwargs):
     while True:
         try:
             return func(*args, **kwargs)
-        except Exception as e:
+        except Exception:
             count += 1
             if count > 120:
                 LOG.exception('Call to %s failed too many times in '
