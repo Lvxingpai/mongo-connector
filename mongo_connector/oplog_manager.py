@@ -380,7 +380,7 @@ class OplogThread(threading.Thread):
         else:
             query['ts'] = {'$gte': timestamp}
             cursor = self.oplog.find(
-                query, tailable=True, await_data=True)
+                query, cursor_type=CursorType.TAILABLE_AWAIT)
             # Applying 8 as the mask to the cursor enables OplogReplay
             cursor.add_option(8)
         return cursor
@@ -747,7 +747,7 @@ class OplogThread(threading.Thread):
                 to_update = util.retry_until_ok(
                     client[database][coll].find,
                     {'_id': {'$in': bson_obj_id_list}},
-                    fields=self.fields
+                    projection=self.fields
                 )
                 #doc list are docs in target system, to_update are
                 #docs in mongo
